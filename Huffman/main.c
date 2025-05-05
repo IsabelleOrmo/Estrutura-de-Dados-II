@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
-
+#include <string.h>
 #define TAM 256
 
 typedef struct no
@@ -187,12 +187,110 @@ void imprimir_arvore(No *raiz, int tam){
     
 }
 
+int altura_arvore(No *raiz){
+    int esq, dir;
+    if (raiz == NULL)
+    {
+        return -1;
+    } else {
+        esq = altura_arvore(raiz->esq) + 1;
+        dir = altura_arvore(raiz->dir) + 1;
+
+        if (esq > dir)
+        {
+            return esq;
+        } else {
+            return dir;
+        }
+        
+    }
+    
+}
+
+char** aloca_dicionario(int colunas){
+    char **dicionario;
+    int i;
+
+    dicionario = malloc(sizeof(char*) * TAM);
+
+    for (i = 0; i < TAM; i++)
+    {
+        dicionario[i] = calloc(colunas, sizeof(char));
+        // calloc aloca e limpa a memoria
+    }
+    
+    return dicionario;
+
+}
+
+void gerar_dicionario(char **dicionario, No * raiz, char *caminho, int colunas){
+    char esquerda[colunas], direita[colunas];
+
+    if (raiz->esq == NULL && raiz->dir == NULL)
+    {
+        strcpy(dicionario[raiz->caracter], caminho);
+    } else {
+        strcpy(esquerda, caminho);
+        strcpy(direita, caminho);
+
+        strcat(esquerda, "0");
+        strcat(direita, "1");
+
+        gerar_dicionario(dicionario, raiz->esq, esquerda, colunas);
+        gerar_dicionario(dicionario, raiz->dir, direita, colunas);
+    }
+    
+}
+
+void imprimir_dicionario(char **dicionario){
+    int i;
+    printf("\tDicionario");
+    for (i = 0; i < TAM; i++)
+    {
+        if (strlen(dicionario[i]) > 0)
+        {
+            printf("\t%3d: %s\n", i, dicionario[i]);
+        }
+        
+    }
+}
+
+int calcula_tamanho_string(char **dicionario, unsigned char *texto){
+    int i = 0, tam = 0;
+
+    while (texto[i] != '\0')
+    {
+        tam = tam + strlen(dicionario[texto[i]]);
+        i++;
+    }
+    
+    return tam + 1;
+}
+
+char * codificar(char **dicionario, unsigned char *texto){
+
+    int i = 0, tam = calcula_tamanho_string(dicionario, texto);
+
+    char *codigo = calloc(tam, sizeof(char));
+
+    while (texto[i] != '\0')
+    {
+        strcat(codigo, dicionario[texto[i]]);
+        i++;
+    }
+    
+    return codigo;
+}
+
 int main() {
 
-    unsigned char texto[] =  "Vamos aprender a programa";
+    unsigned char texto[] =  "Vamos aprendér a programa";
     unsigned int tabela_frequencia[TAM];
     Lista lista;
     No *arvore;
+    int colunas;
+    char **dicionario;
+    char *codificado;
 
     setlocale(LC_ALL, "Portuguese");
 
@@ -211,6 +309,15 @@ int main() {
     printf("\nÁrvore\n");
     imprimir_arvore(arvore, 0);
 
+    //dicionario
+    colunas = altura_arvore(arvore) + 1;
+    dicionario = aloca_dicionario(colunas);
+    gerar_dicionario(dicionario, arvore, "", colunas);
+    imprimir_dicionario(dicionario);
+
+    //codificar
+    codificado = codificar(dicionario, texto);
+    printf("\nTexto Codificado: %s", codificado);
     return 0;
 }
 
